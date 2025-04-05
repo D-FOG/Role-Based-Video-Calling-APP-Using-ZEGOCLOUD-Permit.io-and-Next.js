@@ -6,8 +6,24 @@ import Link from "next/link"
 import { Video } from 'lucide-react'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
+
 
 export default function MeetingPage() {
+    const { data: session, status } = useSession()
+    const router = useRouter()
+
+    useEffect(() => {
+        if (status === "unauthenticated") {
+            router.push("/signin")
+        }
+    }, [status, router])
+
+    if (status === "loading") {
+        return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    }
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
       <div className="container mx-auto px-4 py-12 md:py-24">

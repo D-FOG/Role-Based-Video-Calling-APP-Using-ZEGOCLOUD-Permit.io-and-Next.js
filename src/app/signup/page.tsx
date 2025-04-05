@@ -7,9 +7,48 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Eye, EyeOff } from 'lucide-react'
+import { useRouter } from "next/navigation"
 
 export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false)
+  const router = useRouter();
+
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+  
+    const formData = new FormData(e.currentTarget);
+    const firstName = formData.get("first_name")?.toString() || "";
+    const lastName = formData.get("last_name")?.toString() || "";
+    const email = formData.get("email")?.toString() || "";
+    const password = formData.get("password")?.toString() || "";
+  
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, firstName, lastName })
+      });
+  
+      if (!res.ok) {
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await res.json();
+          alert(data.message || "Signup failed");
+        } else {
+          const errorText = await res.text();
+          console.error("Signup error:", errorText);
+          alert(`An unexpected error occurred.${errorText}`);
+        }
+        return;
+      }
+  
+      // Redirect to sign-in page upon successful signup
+      router.push("/signin");
+    } catch (error) {
+      console.error("Signup error:", error);
+      alert(`An unexpected error occurred: ${error}`);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 flex items-center justify-center px-4">
@@ -24,11 +63,12 @@ export default function SignUp() {
               className="w-auto h-12 transition-transform hover:scale-105"
             />
           </div>
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleSignup}>
             <div className="space-y-2">
               <Label htmlFor="first_name">First Name</Label>
               <Input
                 type="text"
+                name="first_name"
                 id="first_name"
                 placeholder="Enter your first name"
                 required
@@ -38,6 +78,7 @@ export default function SignUp() {
               <Label htmlFor="last_name">Last Name</Label>
               <Input
                 type="text"
+                name="last_name"
                 id="last_name"
                 placeholder="Enter your last name"
                 required
@@ -47,6 +88,7 @@ export default function SignUp() {
               <Label htmlFor="email">Email</Label>
               <Input
                 type="email"
+                name="email"
                 id="email"
                 placeholder="Enter your email"
                 required
@@ -57,6 +99,7 @@ export default function SignUp() {
               <div className="relative">
                 <Input
                   type={showPassword ? "text" : "password"}
+                  name="password"
                   id="password"
                   placeholder="Enter your password"
                   required
@@ -94,4 +137,3 @@ export default function SignUp() {
     </div>
   )
 }
-

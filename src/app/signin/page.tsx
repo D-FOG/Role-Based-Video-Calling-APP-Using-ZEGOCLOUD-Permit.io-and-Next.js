@@ -1,13 +1,38 @@
 'use client'
 
-import React from "react"
+import React, { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { signIn } from "next-auth/react"
+import { useRouter } from "next/navigation"
 
 export default function SignInPage() {
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const router = useRouter()
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    const email = formData.get("email")?.toString() || ""
+    const password = formData.get("password")?.toString() || ""
+
+    const result = await signIn("credentials", {
+      redirect: false,
+      email,
+      password,
+    })
+    console.log(result)
+    if (result?.error) {
+      setErrorMessage(result.error)
+      console.log(result?.error)
+    } else {
+      router.push("/meeting") // or your desired protected route
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -21,11 +46,12 @@ export default function SignInPage() {
               className="w-auto h-12"
             />
           </div>
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label htmlFor="email">Email address</Label>
               <Input
                 type="email"
+                name="email"
                 id="email"
                 placeholder="Enter your email"
                 required
@@ -35,11 +61,15 @@ export default function SignInPage() {
               <Label htmlFor="password">Password</Label>
               <Input
                 type="password"
+                name="password"
                 id="password"
                 placeholder="Enter your password"
                 required
               />
             </div>
+            {errorMessage && (
+              <div className="text-red-500 text-sm">{errorMessage}</div>
+            )}
             <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600 text-white">
               Sign In
             </Button>
@@ -55,4 +85,3 @@ export default function SignInPage() {
     </div>
   )
 }
-
