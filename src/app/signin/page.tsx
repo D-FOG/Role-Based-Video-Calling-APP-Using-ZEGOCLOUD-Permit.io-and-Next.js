@@ -29,7 +29,7 @@ export default function SignInPage() {
       setErrorMessage(result.error)
       console.log(result?.error)
     } else {
-      router.push("/meeting") // or your desired protected route
+      router.push("/create") // or your desired protected route
     }
   }
 
