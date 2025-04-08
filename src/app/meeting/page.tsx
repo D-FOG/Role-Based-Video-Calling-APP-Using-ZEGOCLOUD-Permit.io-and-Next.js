@@ -8,12 +8,13 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 
 export default function MeetingPage() {
     const { data: session, status } = useSession()
     const router = useRouter()
+    const [roomInput, setRoomInput] = useState('')
 
     useEffect(() => {
         if (status === "unauthenticated") {
@@ -52,12 +53,23 @@ export default function MeetingPage() {
                 </Button>
               </Link>
               <div className="flex w-full sm:w-auto">
-                <Input 
+                {/* <Input 
                   placeholder="Enter a code or link here"
                   className="rounded-r-none border-r-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
                 <Button type="submit" className="rounded-l-none bg-blue-500 hover:bg-blue-600 text-white">
                   Join
+                </Button> */}
+                <Input 
+                    placeholder="Enter a code or link here"
+                    value={roomInput}
+                    onChange={e => setRoomInput(e.target.value)}
+                />
+                <Button 
+                    onClick={() => router.push(`/call/${roomInput}`)} 
+                    className="rounded-l-none bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                    Join
                 </Button>
               </div>
             </div>
