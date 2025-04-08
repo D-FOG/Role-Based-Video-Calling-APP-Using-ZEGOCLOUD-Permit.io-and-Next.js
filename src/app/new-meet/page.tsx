@@ -62,7 +62,7 @@ export default function NewMeetPage() {
         } else {
             // Redirect or show success message
             //router.push(`/meeting/${data.meetingId}`); // e.g., to the meeting room page
-            router.push(`/meeting`);
+            router.push(`/create`);
         }
         } catch (error) {
         console.error("Error creating meeting:", error);
