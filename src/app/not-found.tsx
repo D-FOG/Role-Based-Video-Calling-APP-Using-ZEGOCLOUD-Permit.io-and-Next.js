@@ -23,7 +23,7 @@ export default function NotFound() {
           existed.
         </p>
 
-        <div className="flex justify-between space-y-3 sm:flex-row sm:space-x-3 sm:space-y-0">
+        <div className="flex flex-col justify-between space-y-3 sm:flex-row sm:space-x-3 sm:space-y-0">
           <Button asChild className="bg-[#4285F4] hover:bg-[#3b78de]">
             <Link href="/">
               <Home className="mr-2 h-4 w-4" />
