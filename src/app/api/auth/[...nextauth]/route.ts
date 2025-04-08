@@ -8,7 +8,8 @@ import { NextAuthOptions } from "next-auth"
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
-    maxAge: 60, // 60 seconds = 1 minute
+    //maxAge: 60, // 60 seconds = 1 minute
+    maxAge: 604800, // 7 days in seconds
   },
   providers: [
     CredentialsProvider({
