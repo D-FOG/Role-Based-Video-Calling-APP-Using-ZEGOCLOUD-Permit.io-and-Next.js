@@ -1,4 +1,4 @@
-import { CalendarClock, MapPin, MoreHorizontal, Plus, Users } from "lucide-react"
+import { CalendarClock, MoreHorizontal, Plus, Users } from "lucide-react"
 import Link from "next/link"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"

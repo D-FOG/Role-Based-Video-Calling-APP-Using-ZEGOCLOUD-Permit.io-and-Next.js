@@ -19,7 +19,7 @@ export default function NotFound() {
         <h1 className="mb-2 text-3xl font-bold tracking-tight text-[#4285F4] sm:text-4xl">Page not found</h1>
 
         <p className="mb-8 text-muted-foreground">
-          Sorry, we couldn't find the meeting page you're looking for. It might have been moved, deleted, or never
+          Sorry, we couldn&rsquo;tt find the meeting page you&rsquo;tre looking for. It might have been moved, deleted, or never
           existed.
         </p>
 
