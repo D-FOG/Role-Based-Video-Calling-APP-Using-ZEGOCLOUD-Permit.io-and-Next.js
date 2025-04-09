@@ -14,7 +14,6 @@ const meetings = [
     description: "Daily standup to discuss progress and blockers",
     date: "2025-04-07T09:00:00",
     duration: 30,
-    // location: "Conference Room A",
     agenda: [
       "Review yesterday's progress",
       "Discuss today's priorities",
@@ -33,7 +32,6 @@ const meetings = [
     description: "Review Q2 goals and plan for Q3",
     date: "2025-04-08T13:00:00",
     duration: 120,
-    // location: "Main Boardroom",
     agenda: ["Q2 performance review", "Q3 goal setting", "Budget allocation", "Team resource planning"],
     attendees: [
       { name: "Emily Wong", avatar: "/placeholder.svg?height=32&width=32", initials: "EW", role: "CEO" },
@@ -48,7 +46,6 @@ const meetings = [
     description: "Present new feature proposals to client",
     date: "2025-04-09T15:30:00",
     duration: 60,
-    // location: "Virtual - Zoom",
     agenda: ["Introduction and recap", "Demo of new features", "Pricing discussion", "Next steps and timeline"],
     attendees: [
       { name: "Thomas Wilson", avatar: "/placeholder.svg?height=32&width=32", initials: "TW", role: "Account Manager" },
@@ -61,7 +58,6 @@ const meetings = [
     description: "Review latest UI designs for the mobile app",
     date: "2025-04-10T11:00:00",
     duration: 45,
-    // location: "Design Lab",
     agenda: [
       "Review design mockups",
       "Discuss user feedback",
@@ -143,14 +139,6 @@ export default function MeetingDetailsPage({ params }: { params: { id: string } 
                     <div className="text-muted-foreground">{time}</div>
                   </div>
                 </div>
-
-                <div className="flex items-start">
-                  {/* <MapPin className="mr-3 h-5 w-5 text-[#4285F4]" /> */}
-                  <div>
-                    {/* <div className="font-medium">Location</div> */}
-                    {/* <div className="text-muted-foreground">{meeting.location}</div> */}
-                  </div>
-                </div>
               </div>
 
               <div>
@@ -200,4 +188,3 @@ export default function MeetingDetailsPage({ params }: { params: { id: string } 
     </div>
   )
 }
-
