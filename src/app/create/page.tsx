@@ -12,7 +12,7 @@ import { useEffect, useState } from "react"
 
 
 export default function MeetingPage() {
-    const { data: session, status } = useSession()
+    const { status } = useSession()
     const router = useRouter()
     const [roomInput, setRoomInput] = useState('')
 

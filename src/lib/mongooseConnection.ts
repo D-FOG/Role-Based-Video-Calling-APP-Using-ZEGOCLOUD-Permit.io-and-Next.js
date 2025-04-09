@@ -5,9 +5,15 @@ if (!MONGODB_URI) {
   throw new Error("Please define the MONGODB_URI environment variable in .env.local");
 }
 
+declare global {
+    var mongoose: {
+      conn: mongoose.Connection | null;
+      promise: Promise<mongoose.Connection> | null;
+    };
+  }
+
 // Use a global variable so that the value is preserved across module reloads in development.
-let cached: { conn: mongoose.Connection | null; promise: Promise<mongoose.Connection> | null } = 
-  (global as any).mongoose || { conn: null, promise: null };
+const cached = global.mongoose || { conn: null, promise: null };
 
 export async function connectToDatabase(): Promise<mongoose.Connection> {
   if (cached.conn) return cached.conn;
