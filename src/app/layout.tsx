@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { connectToDatabase } from "@/lib/mongooseConnection";
 //import CustomSessionProvider from '@/components/sessionProvider'
 import ClientProviders from '@/components/clientProviders';
 
@@ -19,11 +20,13 @@ export const metadata: Metadata = {
   description: "Welcome to Meet-Hub, your go-to platform for seamless meeting scheduling and management.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
     children,
   }: {
     children: React.ReactNode;
-  }) {
+  })
+  {
+    await connectToDatabase()
     return (
       <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
