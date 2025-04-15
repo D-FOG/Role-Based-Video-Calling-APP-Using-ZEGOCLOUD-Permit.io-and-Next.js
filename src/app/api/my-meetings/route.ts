@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/authOptions'
 import { connectToDatabase } from '@/lib/mongooseConnection'
 import Meeting from '@/models/meeting'
 
-export async function GET(request: Request) {
+export async function GET() {
     const session = await getServerSession(authOptions)
     
   if (!session?.user?.id) {

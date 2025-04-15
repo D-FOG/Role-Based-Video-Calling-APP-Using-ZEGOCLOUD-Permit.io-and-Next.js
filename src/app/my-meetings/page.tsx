@@ -108,9 +108,19 @@ import { useSession } from 'next-auth/react'
 import { Check, Copy, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
+type Meeting = {
+    _id: string
+    title: string
+    roomId: string
+    createdAt: string
+    location: string
+    description?: string
+    guestEmails: string[]
+}
+
 export default function MyMeetingsPage() {
   const { status } = useSession()
-  const [meetings, setMeetings] = useState<any[]>([])
+  const [meetings, setMeetings] = useState<Meeting[]>([])
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
   useEffect(() => {
