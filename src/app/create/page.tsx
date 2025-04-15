@@ -45,38 +45,34 @@ export default function MeetingPage() {
             <p className="text-blue-700 text-lg md:text-xl">
               Schedule or start an instant interaction with fellow team members now!
             </p>
+            <div className="flex flex-col gap-4 w-full">
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/new-meet">
+                <Link href="/new-meet">
                 <Button className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white">
-                  <Video className="mr-2 h-5 w-5" />
-                  Schedule your Meeting
+                    <Video className="mr-2 h-5 w-5" />
+                    Schedule your Meeting
                 </Button>
-              </Link>
-              <Link href="/my-meetings">
+                </Link>
+                <Link href="/my-meetings">
                 <Button variant="outline" className="w-full sm:w-auto border-blue-500 text-blue-500 hover:bg-blue-50">
                     View My Meetings
                 </Button>
-              </Link>
-              <div className="flex w-full sm:w-auto">
-                {/* <Input 
-                  placeholder="Enter a code or link here"
-                  className="rounded-r-none border-r-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
-                <Button type="submit" className="rounded-l-none bg-blue-500 hover:bg-blue-600 text-white">
-                  Join
-                </Button> */}
+                </Link>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 w-full">
                 <Input 
                     placeholder="Enter a code or link here"
                     value={roomInput}
                     onChange={e => setRoomInput(e.target.value)}
+                    className="w-full"
                 />
                 <Button 
                     onClick={() => router.push(`/call/${roomInput}`)} 
-                    className="rounded-l-none bg-blue-500 hover:bg-blue-600 text-white"
+                    className="bg-blue-500 hover:bg-blue-600 text-white w-full sm:w-auto"
                 >
                     Join
                 </Button>
-              </div>
+            </div>
             </div>
           </div>
           <div className="w-full max-w-md lg:max-w-lg xl:max-w-xl">
