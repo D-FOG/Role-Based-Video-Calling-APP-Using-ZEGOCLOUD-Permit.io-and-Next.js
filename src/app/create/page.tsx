@@ -49,7 +49,12 @@ export default function MeetingPage() {
               <Link href="/new-meet">
                 <Button className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white">
                   <Video className="mr-2 h-5 w-5" />
-                  Schedule your first Meeting
+                  Schedule your Meeting
+                </Button>
+              </Link>
+              <Link href="/my-meetings">
+                <Button variant="outline" className="w-full sm:w-auto border-blue-500 text-blue-500 hover:bg-blue-50">
+                    View My Meetings
                 </Button>
               </Link>
               <div className="flex w-full sm:w-auto">

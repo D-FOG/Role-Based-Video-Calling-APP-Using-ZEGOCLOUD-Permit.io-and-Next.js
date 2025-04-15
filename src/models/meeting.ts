@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema, Types } from 'mongoose';
 
 export interface IMeeting extends Document {
   title: string;
@@ -12,6 +12,7 @@ export interface IMeeting extends Document {
   description?: string;
   guestEmails: string[];
   guestPermissions: string[]; // e.g., ['modify event', 'invite others', 'see guest list']
+  createdBy: Types.ObjectId // Assuming this is a user ID or email of the creator
   createdAt: Date;
 }
 
@@ -27,6 +28,7 @@ const MeetingSchema: Schema<IMeeting> = new Schema({
   description: { type: String },
   guestEmails: { type: [String], default: [] },
   guestPermissions: { type: [String], default: [] },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   createdAt: { type: Date, default: Date.now },
 });
 

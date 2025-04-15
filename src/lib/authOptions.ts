@@ -19,9 +19,11 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         await connectToDatabase()
         const user = await User.findOne({ email: credentials?.email })
+        // console.log(user);
         if (!user) throw new Error("No user found")
 
         const isValid = await bcrypt.compare(credentials!.password, user.password)
+        // console.log(isValid);
         if (!isValid) throw new Error("Invalid credentials")
 
         return {
@@ -45,6 +47,8 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string
         session.user.role = token.role as string
       }
+    //   console.log("Session: ", session)
+    //   console.log("Token: ", token) 
       return session
     },
   },
