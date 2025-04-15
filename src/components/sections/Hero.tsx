@@ -21,7 +21,7 @@ function Hero() {
             <p className="text-blue-700 text-lg lg:text-xl">
               Join thousands of satisfied users. Experience the future of team meetings with MeetHub today!
             </p>
-            <Link href="/create">
+            <Link href="/signin">
               <Button size="lg" className="group bg-blue-500 hover:bg-blue-600 text-white">
                 Schedule your first Meeting
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
