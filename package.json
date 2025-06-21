@@ -26,6 +26,7 @@
     "mongoose": "^8.13.2",
     "next": "15.1.4",
     "next-auth": "^4.24.11",
+    "permitio": "^2.7.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^2.6.0",

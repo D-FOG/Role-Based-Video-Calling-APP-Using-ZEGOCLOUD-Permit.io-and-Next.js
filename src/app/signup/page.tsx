@@ -28,7 +28,9 @@ export default function SignUp() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, firstName, lastName })
       });
-  
+      
+      const data = await res.json();
+
       if (!res.ok) {
         const contentType = res.headers.get("content-type");
         if (contentType && contentType.includes("application/json")) {
@@ -41,6 +43,8 @@ export default function SignUp() {
         }
         return;
       }
+
+      localStorage.setItem('userId', data.userId); // Store userId in localStorage
   
       // Redirect to sign-in page upon successful signup
       router.push("/signin");
