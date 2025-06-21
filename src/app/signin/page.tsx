@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { signIn } from "next-auth/react"
+import { getSession, signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 
 export default function SignInPage() {
@@ -24,11 +24,20 @@ export default function SignInPage() {
       email,
       password,
     })
+    
     console.log(result)
     if (result?.error) {
       setErrorMessage(result.error)
       console.log(result?.error)
     } else {
+       // Fetch the session to get user details
+       const session = await getSession()
+       if (session?.user?.id) {
+         // Store the user ID in localStorage
+         localStorage.setItem("userId", session.user.id)
+         console.log("User ID stored in localStorage:", session.user.id)
+       }
+
       router.push("/create") // or your desired protected route
     }
   }

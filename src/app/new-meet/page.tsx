@@ -21,6 +21,7 @@ export default function NewMeetPage() {
         e.preventDefault();
         setLoading(true);
         setErrorMsg("");
+        const userId = localStorage.getItem("userId");
 
         // Use FormData to collect form input values
         const formData = new FormData(e.currentTarget);
@@ -48,6 +49,7 @@ export default function NewMeetPage() {
         description,
         guestEmails,
         guestPermissions,
+        userId,
         };
 
         try {
