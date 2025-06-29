@@ -1,44 +1,27 @@
 'use client'
 
-import React, { useEffect, useRef, useState} from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { ZegoUIKitPrebuilt } from '@zegocloud/zego-uikit-prebuilt'
+import { useSession } from 'next-auth/react'
 import { ToastContainer } from '@/components/ui/toast'
 import { useToast } from '@/components/ui/toast'
 import { useRouter } from 'next/navigation'
-import { Wifi, WifiOff, AlertCircle } from 'lucide-react'
+import { Wifi, WifiOff } from 'lucide-react'
+import { permit } from '@/lib/permit'
 
 interface ZegoInstance {
-    joinRoom: (options: {
-      container: HTMLElement;
-      scenario: { mode: string };
-      sharedLinks?: { name: string; url: string }[];
-      showScreenSharingButton?: boolean;
-      showRecordingButton?: boolean;
-      showTextChat?: boolean;
-      showUserList?: boolean;
-      turnOnMicrophoneWhenJoining?: boolean;
-      turnOnCameraWhenJoining?: boolean;
-      showMyCameraToggleButton?: boolean;
-      showMyMicrophoneToggleButton?: boolean;
-      showAudioVideoSettingsButton?: boolean;
-      onNetworkQuality?: (stats: any) => void;
-      onUserJoin?: (users: any[]) => void;
-      onUserLeave?: (users: any[]) => void;
-      onError?: (error: any) => void;
-      showLeavingView?: boolean;
-      maxUsers?: number;
-      showNonVideoUser?: boolean;
-      showOnlyAudioUser?: boolean;
-      useFrontFacingCamera?: boolean;
-      onLiveStart?: () => void;
-      onLiveEnd?: () => void;
-      onJoinRoom?: () => void;
-      onLeaveRoom?: () => void;
-    }) => void;
-    leaveRoom?: () => void;
-    destroy?: () => void;
+  joinRoom: (options: any) => void
+  leaveRoom?: () => void
+  destroy?: () => void
 }
+
+// Explicit type for network stats
+interface NetworkStats {
+  uplink: number
+  downlink: number
+}
+
 export default function CallRoom() {
   return (
     <ToastContainer>
@@ -48,225 +31,217 @@ export default function CallRoom() {
 }
 
 function CallRoomContent() {
+  const { data: session, status } = useSession()
   const params = useParams()
   const router = useRouter()
   const { addToast } = useToast()
   const roomId = params.roomId as string
   const containerRef = useRef<HTMLDivElement>(null)
   const zegoInstanceRef = useRef<ZegoInstance | null>(null)
-  const appID = parseInt(process.env.NEXT_PUBLIC_ZEGO_APP_ID!) // e.g., 1234567890
-  const serverSecret = process.env.NEXT_PUBLIC_ZEGO_SERVER_SECRET!
+  const appID = Number(process.env.NEXT_PUBLIC_ZEGO_APP_ID)
+  const serverSecret = process.env.NEXT_PUBLIC_ZEGO_SERVER_SECRET as string
   const joinedRef = useRef(false)
-  const [isMuted, setIsMuted] = useState(false)
-  const [isCameraOff, setIsCameraOff] = useState(false)
-  const [isScreenSharing, setIsScreenSharing] = useState(false)
-  const [isChatOpen, setIsChatOpen] = useState(false)
-  const [participants, setParticipants] = useState<any[]>([])
-  const [networkQuality, setNetworkQuality] = useState<number>(3) // 0-5 scale, 5 being best
-  const [isRecording, setIsRecording] = useState(false)
+  const [networkQuality, setNetworkQuality] = useState(3)
 
-  useEffect(() => {
-    if (!roomId || joinedRef.current) return;
+  const getTokenAndJoin = async () => {
+     if (status !== 'authenticated' || !session?.user) {
+      addToast({ title: 'Auth Error', description: 'User not authenticated', variant: 'destructive' })
+      return
+    }
 
-    const userID = `user_${Math.floor(Math.random() * 10000)}`
+    // 1️⃣ Cleanup any previous session
+    if (zegoInstanceRef.current) {
+      zegoInstanceRef.current.leaveRoom?.()
+      zegoInstanceRef.current.destroy?.()
+      zegoInstanceRef.current = null
+    }
+    if (containerRef.current) {
+      containerRef.current.innerHTML = ''
+    }
+    joinedRef.current = false
+
+    //const userI_D = session.user.id as string
+    console.log('User ID:', session)
+    // 2️⃣ Generate a new token (dev/test only)
+    //const userID = `user_${Date.now()}`
+    const userID = session.user.id as string
     const userName = `Guest_${userID}`
 
-    const getTokenAndJoin = async () => {
-      try {
-        // From server side it initializes the token but fails to join the call due to authentication error
-        const res = await fetch('/api/meeting-token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userID, roomID: roomId })
-        })
+    async function checkPermit(user: string, action: string, resource: string) {
+    const res = await fetch('/api/permit-check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user, action, resource })
+    })
+    if (!res.ok) throw new Error(await res.text())
+    const { allowed } = await res.json() as { allowed: boolean }
+    return allowed
+  }
 
-        if (!res.ok) {
-            const errorText = await res.text();
-            addToast({
-              title: 'Connection Error',
-              description: `Failed to connect to meeting server: ${errorText}`,
-              variant: 'destructive',
-              duration: 5000
-            });
-            throw new Error(`Error fetching token: ${errorText}`);
-        }
+    // fetch permissions
+    const canListen = await checkPermit(userID, 'listen', roomId)
+    const canSpeak = await checkPermit(userID, 'speak', roomId)
+    const canModerate = await checkPermit(userID, 'moderate', roomId)
 
-        const data = await res.json()
-        const token = data.token
-        console.log('Received token:', token);
+    console.log('Permissions:', { canListen, canSpeak, canModerate });
 
-        // Using the token from the client side to join the call
-        const kitTokenTest = ZegoUIKitPrebuilt.generateKitTokenForTest(appID, serverSecret, roomId, userID, userName);
-        const zp = ZegoUIKitPrebuilt.create(kitTokenTest) as unknown as ZegoInstance
-        zegoInstanceRef.current = zp;
-        
-        zp.joinRoom({
-          container: containerRef.current!,
-          scenario: {
-            mode: ZegoUIKitPrebuilt.VideoConference
-          },
-          sharedLinks: [
-            {
-              name: 'Copy Link',
-              url: window.location.href
-            }
-          ],
-          // Custom controls for screen sharing, recording, and chat
-          showScreenSharingButton: true,
-          showRecordingButton: true,
-          showTextChat: true,
-          
-          // Participant management features
-          showUserList: true,
-          maxUsers: 50,
-          showNonVideoUser: true,
-          
-          // Default device settings
-          turnOnMicrophoneWhenJoining: true,
-          turnOnCameraWhenJoining: true,
-          showMyCameraToggleButton: true,
-          showMyMicrophoneToggleButton: true,
-          showAudioVideoSettingsButton: true,
-          useFrontFacingCamera: true,
-          
-          // Event handlers
-          onNetworkQuality: (stats) => {
-            // Update network quality indicator (0-5 scale, 5 being best)
-            if (stats && stats.uplink) {
-              setNetworkQuality(stats.uplink);
-            }
-          },
-          onUserJoin: (users) => {
-            setParticipants(prevParticipants => {
-              const newParticipants = [...prevParticipants];
-              users.forEach(user => {
-                if (!newParticipants.find(p => p.userID === user.userID)) {
-                  newParticipants.push(user);
-                }
-              });
-              return newParticipants;
-            });
-            
-            addToast({
-              title: 'Participant Joined',
-              description: `${users.length} participant(s) joined the meeting`,
-              variant: 'success',
-              duration: 3000
-            });
-          },
-          onUserLeave: (users) => {
-            setParticipants(prevParticipants => 
-              prevParticipants.filter(p => !users.find(u => u.userID === p.userID))
-            );
-            
-            addToast({
-              title: 'Participant Left',
-              description: `${users.length} participant(s) left the meeting`,
-              variant: 'default',
-              duration: 3000
-            });
-          },
-          onError: (error) => {
-            console.error('Zego error:', error);
-            addToast({
-              title: 'Meeting Error',
-              description: `An error occurred: ${error.message || 'Unknown error'}`,
-              variant: 'destructive',
-              duration: 5000
-            });
-          },
-          onJoinRoom: () => {
-            addToast({
-              title: 'Meeting Joined',
-              description: `Successfully joined room: ${roomId}`,
-              variant: 'success',
-              duration: 3000
-            });
-          },
-          onLeaveRoom: () => {
-            addToast({
-              title: 'Meeting Ended',
-              description: 'You have left the meeting',
-              variant: 'default',
-              duration: 3000
-            });
-          }
-        })
+    // All available buttons
+    const allButtons = [
+      'toggleMicrophoneButton',
+      'toggleCameraButton',
+      'toggleScreenSharingButton',
+      'textChatButton',
+      'userListButton',
+      'switchCameraButton',
+      'switchAudioOutputButton',
+      'leaveButton',
+      'muteAllAudioButton',
+      'muteAllVideoButton',
+      'beautyButton',
+      'deviceToggleButton',
+      'fullScreenButton',
+      'raiseHandButton',
+      'coHostButton',
+      'moreButton',
+      'recordingButton',
+      'whiteboardButton',
+      'liveButton'
+    ]
 
-        joinedRef.current = true;
-      } catch (error) {
-        console.error('Failed to get token or join room:', error);
+    // Filter buttons by role
+    let buttons: string[] = ['leaveButton']
+    if (canModerate) {
+      buttons = allButtons.slice() // host sees everything
+    } else if (canSpeak) {
+      // speaker sees speak+listen controls
+      buttons = allButtons.filter(key => [
+        'toggleMicrophoneButton',
+        'toggleCameraButton',
+        'textChatButton',
+        'userListButton',
+        'raiseHandButton',
+        'muteAllAudioButton',
+        'beautyButton',
+        'deviceToggleButton',
+        'fullScreenButton',
+        'switchCameraButton',
+        'switchAudioOutputButton',
+        'leaveButton'
+      ].includes(key))
+    } else if (canListen) {
+      // listener sees minimal controls
+      buttons = ['toggleSpeakerButton', 'textChatButton', 'leaveButton']
+    }
+
+
+    // // determine buttons
+    // const buttons = ['leaveButton']
+    // if (canListen) buttons.splice(0, 0, 'toggleSpeaker')
+    // if (canSpeak) buttons.unshift('toggleMicrophoneButton', 'toggleCameraButton')
+    // if (canModerate) buttons.push('userListButton')
+
+    const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
+      appID,
+      serverSecret,
+      roomId,
+      userID,
+      userName,
+    )
+    console.log('Test Token:', kitToken)
+
+    // 3️⃣ Create and join
+    const zp = ZegoUIKitPrebuilt.create(kitToken) as unknown as ZegoInstance
+    zegoInstanceRef.current = zp
+
+    zp.joinRoom({
+      container: containerRef.current!,
+      scenario: { mode: ZegoUIKitPrebuilt.VideoConference },
+      sharedLinks: [{ name: 'Copy Link', url: window.location.href }],
+      bottomMenuBarConfig: { buttons, maxCount: buttons.length },
+
+      onNetworkQuality: (stats: NetworkStats) => {
+        if (stats?.uplink != null) setNetworkQuality(stats.uplink)
+      },
+      onJoinRoom: () => {
+        joinedRef.current = true
+        addToast({ title: 'Meeting Joined', description: roomId, variant: 'success' })
+      },
+      onLeaveRoom: () => {
+        joinedRef.current = false
+        addToast({ title: 'Meeting Ended', description: '', variant: 'default' })
+      },
+      onError: (err: any) => {
+        joinedRef.current = false
+        console.error('Zego error:', err)
+        console.error('Zego full error object:', err);
         addToast({
-          title: 'Connection Failed',
-          description: `Could not join the meeting: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          title: 'Meeting Error',
+          description: `${err.code || ''} ${err.message || JSON.stringify(err)}`,
           variant: 'destructive',
-          duration: 5000
-        });
+        })
+      },
+    })
+  }
+
+  useEffect(() => {
+    if (!roomId || joinedRef.current) return
+
+    const requestMedia = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        stream.getTracks().forEach(t => t.stop())
+        getTokenAndJoin()
+      } catch (err: any) {
+        console.error('Media error:', err)
+        addToast({ title: 'Media Permission Error', description: err.message, variant: 'destructive' })
       }
     }
 
-    getTokenAndJoin()
+    requestMedia()
 
     return () => {
-        // Call endCall to cleanup when component unmounts
-        endCall();
-    };
-  }, [roomId, appID, serverSecret])
-
-//   const endCall = () => {
-//     if (zegoInstance) {
-//       // Call the leaveRoom or destroy method as provided by the SDK.
-//       if (typeof zegoInstance.leaveRoom === 'function') {
-//         zegoInstance.leaveRoom()
-//       }
-//       if (typeof zegoInstance.destroy === 'function') {
-//         zegoInstance.destroy()
-//       }
-//       setZegoInstance(null)
-//       joinedRef.current = false
-//     }
-//   }
-    const endCall = () => {
-        const instance = zegoInstanceRef.current;
-        if (instance) {
-        if (typeof instance.leaveRoom === 'function') {
-            instance.leaveRoom();
-        }
-        if (typeof instance.destroy === 'function') {
-            instance.destroy();
-        }
-        zegoInstanceRef.current = null;
-        joinedRef.current = false;
-        }
-    };
-
-  // Network quality indicator component
-  const NetworkQualityIndicator = () => {
-    if (networkQuality >= 4) {
-      return <Wifi className="text-green-500" size={24} />;
-    } else if (networkQuality >= 2) {
-      return <Wifi className="text-yellow-500" size={24} />;
-    } else if (networkQuality >= 1) {
-      return <Wifi className="text-red-500" size={24} />;
-    } else {
-      return <WifiOff className="text-red-500" size={24} />;
+      // full cleanup on unmount
+      if (zegoInstanceRef.current) {
+        zegoInstanceRef.current.leaveRoom?.()
+        zegoInstanceRef.current.destroy?.()
+        zegoInstanceRef.current = null
+      }
+      joinedRef.current = false
+      if (containerRef.current) containerRef.current.innerHTML = ''
     }
-  };
+  }, [roomId])
+
+  const endCall = (navigate = true) => {
+    const inst = zegoInstanceRef.current
+    if (inst) {
+      inst.leaveRoom?.()
+      inst.destroy?.()
+      zegoInstanceRef.current = null
+      joinedRef.current = false
+    }
+    if (navigate) router.push('/create')
+  }
+
+  const NetworkQualityIndicator = () => {
+    if (networkQuality >= 4) return <Wifi size={24} className="text-green-500" />
+    if (networkQuality >= 2) return <Wifi size={24} className="text-yellow-500" />
+    if (networkQuality >= 1) return <Wifi size={24} className="text-red-500" />
+    return <WifiOff size={24} className="text-red-500" />
+  }
 
   return (
     <div className="relative w-full h-full">
-      {/* Main video container */}
       <div ref={containerRef} style={{ width: '100vw', height: '100vh' }} />
-      
-      {/* Network quality indicator overlay */}
       <div className="absolute top-4 right-4 bg-black bg-opacity-50 p-2 rounded-md flex items-center gap-2">
         <NetworkQualityIndicator />
         <span className="text-white text-sm">
-          {networkQuality >= 4 ? 'Excellent' : 
-           networkQuality >= 2 ? 'Good' : 
+          {networkQuality >= 4 ? 'Excellent' :
+           networkQuality >= 2 ? 'Good' :
            networkQuality >= 1 ? 'Poor' : 'Disconnected'}
         </span>
+        <button onClick={() => endCall(true)} className="ml-2 px-2 py-1 bg-red-600 text-white rounded">Leave</button>
       </div>
     </div>
   )
 }
+

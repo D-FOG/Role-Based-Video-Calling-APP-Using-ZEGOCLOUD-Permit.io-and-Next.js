@@ -73,6 +73,7 @@ export async function POST(request: Request) {
 
     await permit.api.resourceInstances.create({
       key: userId,
+      //resource: `zego-one`, // Use the userId as part of the resource instance key
       resource: "zeego-clone",
       tenant: "default",
     });
@@ -83,6 +84,7 @@ export async function POST(request: Request) {
       role: `host`, // Role key
       tenant: "default",
       resource_instance: `zeego-clone:${userId}`, // Use the correct resource instance key
+      //resource_instance: `zego-one:${userId}`, // Use the correct resource instance key
     });
 
 
