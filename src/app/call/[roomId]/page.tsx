@@ -44,6 +44,11 @@ function CallRoomContent() {
   const [networkQuality, setNetworkQuality] = useState(3)
 
   const getTokenAndJoin = async () => {
+    if (joinedRef.current) {
+      console.warn('Already joined, skipping second joinRoom')
+      return
+    }
+    
      if (status !== 'authenticated' || !session?.user) {
       addToast({ title: 'Auth Error', description: 'User not authenticated', variant: 'destructive' })
       return
@@ -131,6 +136,8 @@ function CallRoomContent() {
     } else if (canListen) {
       // listener sees minimal controls
       buttons = ['toggleSpeakerButton', 'textChatButton', 'leaveButton']
+    }else {
+      buttons = allButtons.slice()   // show everything
     }
 
 
