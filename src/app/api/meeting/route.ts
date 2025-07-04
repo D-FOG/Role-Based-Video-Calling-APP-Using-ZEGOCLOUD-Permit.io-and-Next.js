@@ -62,6 +62,7 @@ export async function POST(request: Request) {
     });
 
     await meeting.save();
+    console.log("Meeting created:", meeting);
 
     // create a resource instance for the meeting and assign it to the user with the role 'host'
     if (!userId) {
@@ -72,9 +73,10 @@ export async function POST(request: Request) {
     }
 
     await permit.api.resourceInstances.create({
-      key: userId,
-      //resource: `zego-one`, // Use the userId as part of the resource instance key
-      resource: "zeego-clone",
+      //key: userId,
+      key: roomId,
+      resource: `zego-one`, // Use the userId as part of the resource instance key
+      //resource: "zeego-clone",
       tenant: "default",
     });
 
@@ -83,9 +85,26 @@ export async function POST(request: Request) {
       user: userId, // User key
       role: `host`, // Role key
       tenant: "default",
-      resource_instance: `zeego-clone:${userId}`, // Use the correct resource instance key
-      //resource_instance: `zego-one:${userId}`, // Use the correct resource instance key
+      //resource_instance: `zeego-clone:${userId}`, // Use the correct resource instance key
+      resource_instance: `zego-one:${roomId}`, // Use the correct resource instance key
     });
+
+    for (const email of guestEmails) {
+      // Assume you have logic to check or collect speaker-intended emails
+      const shouldBeSpeaker = guestPermissions.includes("invite others"); // or use another condition
+
+      try {
+        await permit.api.users.create({ key: email, email });
+      } catch (err: any) {
+        if (err.response?.status !== 409) throw err; // skip if user already exists
+      }
+      await permit.api.roleAssignments.assign({
+        user: email, // make sure this matches your user identification method
+        role: shouldBeSpeaker ? "speaker" : "listener",
+        tenant: "default",
+        resource_instance: `zego-one:${roomId}`,
+      });
+    }
 
 
     return NextResponse.json(

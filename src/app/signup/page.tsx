@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Eye, EyeOff } from 'lucide-react'
 import { useRouter } from "next/navigation"
+import { useToast } from "@/components/ui/toast"
 
 export default function SignUp() {
+  const { addToast } = useToast()
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter();
 
@@ -35,11 +37,19 @@ export default function SignUp() {
         const contentType = res.headers.get("content-type");
         if (contentType && contentType.includes("application/json")) {
           const data = await res.json();
-          alert(data.message || "Signup failed");
+          addToast({
+            title: "Signup Failed",
+            description: data.message || "Something went wrong.",
+            variant: "destructive",
+          })
         } else {
           const errorText = await res.text();
           console.error("Signup error:", errorText);
-          alert(`An unexpected error occurred.${errorText}`);
+          addToast({
+            title: "Signup Failed",
+            description: "Unexpected error occurred. Please try again.",
+            variant: "destructive",
+          });
         }
         return;
       }
@@ -47,10 +57,22 @@ export default function SignUp() {
       localStorage.setItem('userId', data.userId); // Store userId in localStorage
   
       // Redirect to sign-in page upon successful signup
-      router.push("/signin");
-    } catch (error) {
+      addToast({
+        title: "Signup Successful",
+        description: "You can now sign in.",
+        variant: "success",
+      });
+
+      setTimeout(() => {
+        router.push("/signin");
+      }, 2000);
+    } catch (error: any) {
+      addToast({
+        title: "Error",
+        description: error.message || "Something went wrong.",
+        variant: "destructive",
+      })
       console.error("Signup error:", error);
-      alert(`An unexpected error occurred: ${error}`);
     }
   };
 
