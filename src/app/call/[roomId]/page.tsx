@@ -62,29 +62,7 @@ function CallRoomContent() {
       router.push(`/login?callbackUrl=${encodeURIComponent(window.location.href)}`)
     }
   }, [status, router])
-
-  // async function getUserPermissions(userId: string, userEmail?: string) {
-  //     if (!userEmail) {
-  //       userEmail = await getUserEmailFromSocket(userId)
-  //     }
-  //     const user = { id: userId, email: userEmail };
-  //     console.log('Fetching permissions for other users:', user);
-  //     const resourceId = `zego-one:${roomId}`;
-  //     const [canSpeak, canListen] = await Promise.all([
-  //       fetch('/api/permit-check', {
-  //         method: 'POST',
-  //         headers: { 'Content-Type': 'application/json' },
-  //         body: JSON.stringify({ user, action: 'speak', resourceId }),
-  //       }).then(r => r.json()).then(r => r.allowed),
-  //       fetch('/api/permit-check', {
-  //         method: 'POST',
-  //         headers: { 'Content-Type': 'application/json' },
-  //         body: JSON.stringify({ user, action: 'listen', resourceId }),
-  //       }).then(r => r.json()).then(r => r.allowed),
-  //     ]);
-  //     return { canSpeak, canListen };
-  //   }
-
+  
   const getUserPermissions = useCallback(
     async (userId: string, userEmail?: string) => {
       if (!userEmail) {

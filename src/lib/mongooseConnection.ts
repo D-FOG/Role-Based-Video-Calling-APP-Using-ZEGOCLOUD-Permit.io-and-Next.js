@@ -18,15 +18,15 @@ declare global {
 const cached = global.mongoose || { conn: null, promise: null }
 
 export async function connectToDatabase(): Promise<mongoose.Connection> {
-  // ✅ If already connected (readyState 1 = connected), return existing connection
+  //If already connected (readyState 1 = connected), return existing connection
   if (mongoose.connection.readyState === 1) {
     return mongoose.connection
   }
 
-  // ✅ Use cached connection if it exists
+  //Use cached connection if it exists
   if (cached.conn) return cached.conn
 
-  // ✅ If no cached promise, create a new one
+  // If no cached promise, create a new one
   if (!cached.promise) {
     cached.promise = mongoose
     .connect(MONGODB_URI, {

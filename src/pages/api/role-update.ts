@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const userMeta = userMap.get(userId)
-    console.log('🔍 User meta for role update:', userMeta)
+    console.log('User meta for role update:', userMeta)
     if (!userMeta?.email) {
       console.warn('Email not found for user:', userId)
       return res.status(404).json({ error: 'Email not found for user' })
