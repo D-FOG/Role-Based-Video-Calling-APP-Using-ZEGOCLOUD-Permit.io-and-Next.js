@@ -11,10 +11,12 @@ interface NextApiResponseWithSocket extends NextApiResponse {
   }
 }
 
+/* eslint-disable no-var */
 declare global {
   var io: SocketServer | undefined
   var userMap: Map<string, { email: string; name: string }> | undefined
 }
+/* eslint-enable no-var */
 
 export default function handler(req: NextApiRequest, res: NextApiResponseWithSocket) {
   if (!res.socket.server.io) {
@@ -52,7 +54,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
         console.log(`Kicking user ${userId} from room ${roomId}`)
 
         // Get all connected sockets in that room
-        const sockets = io.sockets.sockets
+        //const sockets = io.sockets.sockets
 
         // Find the socket for the userId
         for (const s of io.sockets.sockets.values()) {

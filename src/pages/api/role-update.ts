@@ -17,8 +17,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       newRole: 'speaker' | 'listener'
     }
 
-    const io = (global as any).io as ExtendedSocketServer | undefined
-    const userMap = (global as any).userMap as Map<string, { email: string; name: string }> | undefined
+    const io = (global as unknown as {io?: ExtendedSocketServer}).io
+    const userMap = (global as unknown as {userMap?: Map<string, {email:string; name:string }> }).userMap
 
     if (!io || !userMap) {
       console.warn('Socket.IO or userMap not initialized')
@@ -45,13 +45,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           role,
           resource_instance: `zego-one:${roomId}`
         })
-      } catch (err: any) {
-        const errorMsg = err?.response?.data?.message || err.message || ''
-        console.log('status[Role-Update]:', err?.response?.status)
-  
-        if (err?.response?.status === 404) {
-          console.warn(`Skipping unassign: ${role} — not assigned or user not found`)
-          continue
+      } catch (err: unknown) {
+        if (
+          typeof err === 'object' &&
+          err !== null &&
+          'response' in err &&
+          typeof (err as { response?: { status?: number } }).response?.status === 'number' &&
+          (err as { response: { status: number } }).response.status === 404
+        ) {
+          console.warn(`Skipping unassign: ${role} — not assigned or user not found`);
+          continue;
         }
         throw err;
       }
@@ -68,8 +71,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     io.to(roomId).emit('role-changed', { userId, newRole })
 
     return res.status(200).json({ success: true })
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error occurred'
+    if (err instanceof Error) {
+      console.error('Role update failed:', err.message)
+      return res.status(500).json({ error: err.message })
+    }
     console.error('Role update failed:', err)
-    return res.status(500).json({ error: err.message || 'Unknown error' })
+    return res.status(500).json({ error: message || 'Unknown error' })
   }
 }

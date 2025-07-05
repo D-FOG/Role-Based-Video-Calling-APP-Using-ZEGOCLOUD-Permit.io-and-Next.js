@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ZegoUIKitPrebuilt } from '@zegocloud/zego-uikit-prebuilt'
 import { useSession } from 'next-auth/react'
@@ -9,7 +9,7 @@ import { Wifi, WifiOff } from 'lucide-react'
 import { io as ClientIO } from 'socket.io-client'
 
 interface ZegoInstance {
-  joinRoom: (options: any) => void
+  joinRoom: (options: unknown) => void
   leaveRoom?: () => void
   destroy?: () => void
 }
@@ -24,6 +24,7 @@ interface Participant {
   userName: string
 }
 
+
 export default function CallRoom() {
   return (
     <ToastContainer>
@@ -33,15 +34,12 @@ export default function CallRoom() {
 }
 
 function CallRoomContent() {
+  const { addToast } = useToast()
   const { data: session, status } = useSession()
   const params = useParams()
   const router = useRouter()
-  if (!params || !params.roomId) {
-    router.push('/'); // or show an error
-    return null;
-  }
-  const { addToast } = useToast()
-  const roomId = params.roomId as string
+
+  const roomId = params?.roomId as string
   const containerRef = useRef<HTMLDivElement>(null)
   const zegoInstanceRef = useRef<ZegoInstance | null>(null)
   const [participants, setParticipants] = useState<Participant[]>([])
@@ -54,34 +52,66 @@ function CallRoomContent() {
   const [networkQuality, setNetworkQuality] = useState(3)
   const socketRef = useRef<ReturnType<typeof ClientIO> | null>(null)
 
+  useEffect(() => {
+    if (!roomId) router.push('/');
+  }, [roomId, router]);
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push(`/login?callbackUrl=${encodeURIComponent(window.location.href)}`)
     }
-  }, [status])
+  }, [status, router])
 
-  async function getUserPermissions(userId: string, userEmail?: string) {
+  // async function getUserPermissions(userId: string, userEmail?: string) {
+  //     if (!userEmail) {
+  //       userEmail = await getUserEmailFromSocket(userId)
+  //     }
+  //     const user = { id: userId, email: userEmail };
+  //     console.log('Fetching permissions for other users:', user);
+  //     const resourceId = `zego-one:${roomId}`;
+  //     const [canSpeak, canListen] = await Promise.all([
+  //       fetch('/api/permit-check', {
+  //         method: 'POST',
+  //         headers: { 'Content-Type': 'application/json' },
+  //         body: JSON.stringify({ user, action: 'speak', resourceId }),
+  //       }).then(r => r.json()).then(r => r.allowed),
+  //       fetch('/api/permit-check', {
+  //         method: 'POST',
+  //         headers: { 'Content-Type': 'application/json' },
+  //         body: JSON.stringify({ user, action: 'listen', resourceId }),
+  //       }).then(r => r.json()).then(r => r.allowed),
+  //     ]);
+  //     return { canSpeak, canListen };
+  //   }
+
+  const getUserPermissions = useCallback(
+    async (userId: string, userEmail?: string) => {
       if (!userEmail) {
         userEmail = await getUserEmailFromSocket(userId)
       }
-      const user = { id: userId, email: userEmail };
-      console.log('Fetching permissions for other users:', user);
-      const resourceId = `zego-one:${roomId}`;
+      const user = { id: userId, email: userEmail }
+      const resourceId = `zego-one:${roomId}`
+
       const [canSpeak, canListen] = await Promise.all([
         fetch('/api/permit-check', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user, action: 'speak', resourceId }),
         }).then(r => r.json()).then(r => r.allowed),
+
         fetch('/api/permit-check', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user, action: 'listen', resourceId }),
         }).then(r => r.json()).then(r => r.allowed),
-      ]);
-      return { canSpeak, canListen };
-    }
+      ])
+
+      return { canSpeak, canListen }
+    },
+    [roomId] // dependencies
+  )
+
 
   useEffect(() => {
     if (socketRef.current?.connected) {
@@ -334,7 +364,7 @@ function CallRoomContent() {
         socketRef.current.disconnect()
       }
     }
-  }, [roomId, session?.user?.id])
+  }, [roomId, session, router, status, addToast, getUserPermissions])
 
   function getUserEmailFromSocket(userId: string): Promise<string | undefined> {
     return new Promise((resolve) => {
@@ -375,9 +405,9 @@ function CallRoomContent() {
         description: `${userId} → ${newRole}`,
         variant: 'success'
       })
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Role update error:', err)
-      const msg = err.message || ''
+      const msg = err instanceof Error ? err.message : typeof err === 'string' ? err : 'Unknown error'
       const isUserNotFound = msg.includes('USER_NOT_FOUND') || msg.includes('we could not find')
       console.error('Role update failed:', isUserNotFound)
       addToast({
@@ -388,7 +418,7 @@ function CallRoomContent() {
     }
   }
 
-  const getTokenAndJoin = async () => {
+  const getTokenAndJoin = useCallback(async () => {
     if (!session?.user?.id) return
 
     if (zegoInstanceRef.current) {
@@ -441,13 +471,11 @@ function CallRoomContent() {
     setIsModerator(canModerate)
 
     let buttons: string[] = ['leaveButton']
-    let showUserList = false
     let showTextChat = true;
-    let showRaiseHand = true;
-    let showScreenSharingButton = false
-    let showMyMicrophoneToggleButton = false
-    let turnOnMicrophoneWhenJoining = false
-    let turnOnCameraWhenJoining = false
+    const showRaiseHand = true;
+    //const showMyMicrophoneToggleButton = false
+    // let turnOnMicrophoneWhenJoining = false
+    // let turnOnCameraWhenJoining = false
 
     if (canModerate) {
       buttons = [
@@ -461,8 +489,8 @@ function CallRoomContent() {
         'moreButton',
         'leaveButton'
       ]
-      turnOnMicrophoneWhenJoining = true
-      turnOnCameraWhenJoining     = true
+      // turnOnMicrophoneWhenJoining = true
+      // turnOnCameraWhenJoining     = true
     } else if (canSpeak) {
       buttons = [
         'toggleMicrophoneButton',
@@ -471,15 +499,15 @@ function CallRoomContent() {
         'raiseHandButton',
         'leaveButton'
       ]
-      turnOnMicrophoneWhenJoining = true
-      turnOnCameraWhenJoining     = true
+      // turnOnMicrophoneWhenJoining = true
+      // turnOnCameraWhenJoining     = true
     } else {
       buttons = [
         'textChatButton',
         'raiseHandButton',
         'leaveButton'
       ]
-      showMyMicrophoneToggleButton
+      //showMyMicrophoneToggleButton
       showTextChat = true
     }
 
@@ -524,17 +552,17 @@ function CallRoomContent() {
             .filter((v, i, a) => a.findIndex(x => x.userID === v.userID) === i)
         })
       },
-      onUserListUpdate: (users: any[]) => {
+      onUserListUpdate: (users: { userID: string; userName?: string }[]) => {
         console.log('Raw userListUpdate payload:', users)
-        const all = users.map(u => ({
+        const normalized = users.map(u => ({
           userID: u.userID,
           userName: u.userName || u.userID,
         }))
 
         // Filter out the moderator's own ID:
-        const filtered = all.filter(p => p.userID !== session!.user!.id)
+        const filtered = normalized.filter(p => p.userID !== session!.user!.id)
         setParticipants(filtered)
-        updateParticipantPermissions(users)
+        updateParticipantPermissions(normalized)
 
         console.log('participants after setState:', filtered)
       },
@@ -562,19 +590,27 @@ function CallRoomContent() {
         joinedRef.current = false
         addToast({ title: 'Meeting Ended', description: '', variant: 'default' })
       },
-      onError: (err: any) => {
+      onError: (err: unknown) => {
         joinedRef.current = false
+        let errorMessage = 'unknown error'
+        if (err instanceof Error) {
+          const code = (err as Error & { code?: string }).code
+          errorMessage = `${code || ''} ${err.message}`
+        } else {
+          errorMessage = JSON.stringify(err)
+        }
         console.error('Zego error:', err)
         addToast({
           title: 'Meeting Error',
-          description: `${err.code || ''} ${err.message || JSON.stringify(err)}`,
+          description: errorMessage,
           variant: 'destructive',
         })
       },
     })
-  }
+  }, [session, roomId, getUserPermissions, addToast, appID, serverSecret])
 
   useEffect(() => {
+    const currentContainer = containerRef.current;
     if (!roomId || joinedRef.current || status !== 'authenticated') return
 
     const requestMedia = async () => {
@@ -582,9 +618,10 @@ function CallRoomContent() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         stream.getTracks().forEach(t => t.stop())
         getTokenAndJoin()
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Media error:', err)
-        addToast({ title: 'Media Permission Error', description: err.message, variant: 'destructive' })
+        const message = err instanceof Error ? err.message : 'unknown error'
+        addToast({ title: 'Media Permission Error', description: message, variant: 'destructive' })
       }
     }
 
@@ -597,9 +634,9 @@ function CallRoomContent() {
         zegoInstanceRef.current = null
       }
       joinedRef.current = false
-      if (containerRef.current) containerRef.current.innerHTML = ''
+      if (currentContainer) currentContainer.innerHTML = ''
     }
-  }, [roomId, status])
+  }, [roomId, status, addToast, getTokenAndJoin])
 
   const endCall = (navigate = true) => {
     if (zegoInstanceRef.current) {

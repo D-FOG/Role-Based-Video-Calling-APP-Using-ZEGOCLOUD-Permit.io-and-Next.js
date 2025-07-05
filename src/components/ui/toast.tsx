@@ -75,6 +75,10 @@ const Toast: React.FC<ToastProps & ToastVariantProps> = ({
 export const ToastContainer: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = React.useState<ToastProps[]>([]);
 
+  const removeToast = React.useCallback((id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  }, []);
+
   const addToast = React.useCallback((toast: ToastProps) => {
     const id = toast.id || String(Date.now());
     setToasts((prev) => [...prev, { ...toast, id }]);
@@ -84,11 +88,7 @@ export const ToastContainer: React.FC<{ children?: React.ReactNode }> = ({ child
         removeToast(id);
       }, toast.duration || 5000);
     }
-  }, []);
-
-  const removeToast = React.useCallback((id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  }, []);
+  }, [removeToast]);
 
   return (
     <ToastProvider.Provider value={{ addToast, removeToast }}>

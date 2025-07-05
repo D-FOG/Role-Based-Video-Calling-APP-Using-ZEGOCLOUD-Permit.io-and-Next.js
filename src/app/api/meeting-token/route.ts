@@ -16,7 +16,7 @@ export async function POST(request: Request) {
 
     const appID = APP_ID; // Use the app ID from environment variables
     const serverSecret = SERVER_SECRET; // Use the server secret from environment variables
-    const userName = `Guest_${userID}`; // Generate a user name based on userID
+    //const userName = `Guest_${userID}`; // Generate a user name based on userID
 
     const kitTokenTest = generateZegoToken({ appID, serverSecret,roomID, userID });
     console.log(`Generated token for user ${userID} in room ${roomID}:`, kitTokenTest);

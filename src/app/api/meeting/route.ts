@@ -6,6 +6,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { permit } from "@/lib/permit";
 
+type HttpError = {
+  response?: {
+    status?: number
+  }
+}
+
 export async function POST(request: Request) {
   try {
     // Get the session from NextAuth
@@ -95,8 +101,15 @@ export async function POST(request: Request) {
 
       try {
         await permit.api.users.create({ key: email, email });
-      } catch (err: any) {
-        if (err.response?.status !== 409) throw err; // skip if user already exists
+      } catch (err: unknown) {
+        if (
+        err &&
+        typeof err === "object" &&
+        "response" in err &&
+        (err as HttpError ).response?.status !== 409
+      ) {
+        throw err;
+      } // skip if user already exists
       }
       await permit.api.roleAssignments.assign({
         user: email, // make sure this matches your user identification method

@@ -66,10 +66,11 @@ export default function SignUp() {
       setTimeout(() => {
         router.push("/signin");
       }, 2000);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unexpected error occurred"; 
       addToast({
         title: "Error",
-        description: error.message || "Something went wrong.",
+        description: message || "Something went wrong.",
         variant: "destructive",
       })
       console.error("Signup error:", error);

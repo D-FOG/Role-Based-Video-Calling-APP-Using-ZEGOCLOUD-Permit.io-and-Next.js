@@ -8,20 +8,20 @@ enum ErrorCode {
     effectiveTimeInSecondsInvalid = 6, // "effectiveTimeInSeconds invalid"
 }
 
-const enum KPrivilegeKey {
-    PrivilegeKeyLogin = 1,
-    PrivilegeKeyPublish = 2
-}
+// const enum KPrivilegeKey {
+//     PrivilegeKeyLogin = 1,
+//     PrivilegeKeyPublish = 2
+// }
 
-const enum KPrivilegeVal {
-    PrivilegeEnable = 1,
-    PrivilegeDisable = 0
-}
+// const enum KPrivilegeVal {
+//     PrivilegeEnable = 1,
+//     PrivilegeDisable = 0
+// }
 
-interface ErrorInfo {
-    errorCode: ErrorCode; // Error code from ErrorCode
-    errorMessage: string; // Detailed description of the error code
-}
+// interface ErrorInfo {
+//     errorCode: ErrorCode; // Error code from ErrorCode
+//     errorMessage: string; // Detailed description of the error code
+// }
 
 function RndNum(a:number,b:number){ // Generate a random number within the range of a to b
     return Math.ceil((a +(b - a))*Math.random());
