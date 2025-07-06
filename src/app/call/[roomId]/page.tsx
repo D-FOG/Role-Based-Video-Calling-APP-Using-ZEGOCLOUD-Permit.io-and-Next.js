@@ -142,7 +142,7 @@ function CallRoomContent() {
             roomId,
             userId: session.user.id,
             email: session.user.email,
-            name: session.user.firstName + ' ' + session.user.lastName,
+            name: session.user.lastName + ' ' + session.user.firstName,
           })
         })
         
