@@ -412,7 +412,7 @@ function CallRoomContent() {
     const userID = session.user.id as string
     const firstName = session.user.firstName || 'Guest'
     const lastName = session.user.lastName || `${userID.slice(0, 4)}`
-    const userName = `${firstName} ${lastName}`
+    const userName = `${lastName} ${firstName}`
 
     async function checkPermit(action: string, resource: string) {
       if (!session?.user) return false

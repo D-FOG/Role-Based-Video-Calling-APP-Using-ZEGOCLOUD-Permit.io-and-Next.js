@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     //Try by email
     if (email && action !== 'host') {
       try {
-        perms = await permit.getUserPermissions('flash@gmail.com')
+        perms = await permit.getUserPermissions(email)
         const inst = perms?.[resourceKey]
         if (inst?.permissions.includes(instancePermKey)) {
           console.log('Permission granted via email')
