@@ -22,7 +22,7 @@ MeetHub is a modern meeting management app built with **Next.js**, **Tailwind CS
 - **Frontend**: [Next.js](https://nextjs.org/)  
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)  
 - **UI Components**: [shadcn/ui](https://ui.shadcn.com/)  
-- **RBAC & ABAC**: [Permit.io](https://www.permit.io)  
+- **ReBAC**: [Permit.io](https://www.permit.io)  
 - **Deployment**: [Vercel](https://vercel.com)
 
 ---
